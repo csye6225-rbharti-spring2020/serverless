@@ -4,15 +4,16 @@ import com.amazonaws.services.lambda.runtime.events.SNSEvent;
 
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
+import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * Handler class to receive SNS Topic messages and send an email to the user.
  */
 public class Handler implements RequestHandler<SNSEvent, Object> {
 
-    private final String SNS_EMAIL_KEY = "userEmail";
-    private final String SNS_BILLS_DUE_LIST_KEY = "billsDueUrlsListString";
     private final String FROM_EMAIL = "no-reply@amazon.ses";
     private final String SUBJECT_EMAIL = "Bills Due Update";
 
@@ -24,9 +25,10 @@ public class Handler implements RequestHandler<SNSEvent, Object> {
         String timeStamp = new SimpleDateFormat("yyyy-MM-dd_HH:mm:ss").format(Calendar.getInstance().getTime());
         context.getLogger().log("Handler Invocation started: " + timeStamp);
 
-        Map<String, SNSEvent.MessageAttribute> stringMessageAttributeMap = snsEvent.getRecords().get(0).getSNS().getMessageAttributes();
-        String userEmail = stringMessageAttributeMap.get(SNS_EMAIL_KEY).getValue();
-        String billsDueListString = stringMessageAttributeMap.get(SNS_BILLS_DUE_LIST_KEY).getValue();
+        String billsDueUrlsEmailListString = snsEvent.getRecords().get(0).getSNS().getMessage();
+        List<String> billsDueUrlsEmailList = Stream.of(billsDueUrlsEmailListString.split(",", -1)).collect(Collectors.toList());
+
+        String userEmail = billsDueUrlsEmailList.get(0);
 
         //Only send the email if the email ID entry doesn't exist in the DynamoDB table anymore
         amazonDynamoDBClient = new AmazonDynamoDBClient();
@@ -38,6 +40,10 @@ public class Handler implements RequestHandler<SNSEvent, Object> {
             context.getLogger().log("User has already been sent an email in the past 60 minutes or the client wasn't configured properly");
             return null;
         }
+
+        //removing the email from the list
+        billsDueUrlsEmailList.remove(0);
+        String billsDueListString = String.join(", ", billsDueUrlsEmailList);
 
         amazonSESClient = new AmazonSES(FROM_EMAIL, userEmail, SUBJECT_EMAIL, billsDueListString);
         boolean emailSent = amazonSESClient.sendEmail();
