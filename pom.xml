@@ -29,6 +29,11 @@
             <artifactId>aws-java-sdk-ses</artifactId>
             <version>1.11.754</version>
         </dependency>
+        <dependency>
+            <groupId>software.amazon.awssdk</groupId>
+            <artifactId>dynamodb</artifactId>
+            <version>2.10.86</version>
+        </dependency>
     </dependencies>
 
     <build>
@@ -39,6 +44,7 @@
                 <version>3.2.2</version>
                 <configuration>
                     <createDependencyReducedPom>false</createDependencyReducedPom>
+                    <finalName>SERVERLESS</finalName>
                 </configuration>
                 <executions>
                     <execution>
@@ -61,6 +67,22 @@
                         <version>2.13.0</version>
                     </dependency>
                 </dependencies>
+            </plugin>
+            <plugin>
+                <artifactId>maven-assembly-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>single</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <configuration>
+                    <descriptorRefs>
+                        <descriptorRef>jar-with-dependencies</descriptorRef>
+                    </descriptorRefs>
+                </configuration>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>

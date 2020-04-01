@@ -72,6 +72,7 @@ public class AmazonSES {
     private String constructBodyForBillsDue(String billsDueString) {
         List<String> billsDueUrlsList = Stream.of(billsDueString.split(",", -1)).collect(Collectors.toList());
         StringBuilder bodyStringBuilder = new StringBuilder();
+        bodyStringBuilder.append("Hi, here is a list of all the Bills due: \n\n\n");
         for(String billDueUrl: billsDueUrlsList) {
             bodyStringBuilder.append(billDueUrl + "\n");
         }
