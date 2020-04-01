@@ -1,0 +1,77 @@
+version: 2.0
+
+jobs:
+  test:
+    docker:
+      - image: circleci/openjdk:8-jdk-stretch
+    working_directory: ~/serverless
+    steps:
+      - checkout
+      - run:
+          name: Do a clean install and run unit tests
+          command: mvn clean install
+
+  build_deploy:
+    docker:
+      - image: circleci/openjdk:8-jdk-stretch
+    working_directory: ~/serverless
+    steps:
+      - checkout
+      - run:
+          name: Install AWS cli
+          command: |
+            python --version
+            cat /etc/issue
+            sudo apt-get update -y
+            sudo apt-get install -y python-pip
+            sudo pip install awscli
+            sudo pip install aws-sam-cli
+      - run:
+          name: Configure AWS cli
+          command: |
+            aws --version
+            aws configure set aws_access_key_id ${AWS_ACCESS_KEY_ID}
+            aws configure set aws_secret_access_key ${AWS_SECRET_ACCESS_KEY}
+            aws configure set default.region ${AWS_DEFAULT_REGION}
+            aws configure list
+      - restore_cache:
+          key: serverless-{{ checksum "pom.xml" }}
+      - run:
+          name: Get all the dependencies
+          command: mvn dependency:go-offline
+      - save_cache:
+          paths:
+            - ~/.m2
+          key: serverless-{{ checksum "pom.xml" }}
+      - run:
+          name: Builds the jar file for the webapp
+          command: |
+            mvn clean package
+            pwd
+            ls -al
+            ls -al target/
+      - store_test_results:
+          path: target/surefire-reports
+      - store_artifacts:
+          path: target/SERVERLESS.jar
+      - run:
+          name: Push the new revision of the serverless lambda application to S3
+          command: |
+            aws s3 cp ./target/SERVERLESS.jar s3://${S3_CODEDEPLOY_BUCKET}
+      - run:
+          name: Update the Lambda Function and point it to the new Revision
+          command: |
+            aws lambda update-function-code --function-name my-function --s3-bucket ${S3_CODEDEPLOY_BUCKET} --s3-key SERVERLESS.jar
+
+workflows:
+  version: 2
+  pr_check:
+    jobs:
+      - test
+  build_and_deploy:
+    jobs:
+      - build_deploy:
+          filters:
+            branches:
+              only:
+                - master
