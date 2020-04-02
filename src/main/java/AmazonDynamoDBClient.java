@@ -81,13 +81,13 @@ public class AmazonDynamoDBClient {
                 Set<String> keys = returnedItem.keySet();
                 for (String key1 : keys) {
                     context.getLogger().log("Key: " + key1);
-                    context.getLogger().log("Value: " + returnedItem.get(key1).toString());
-                    if(returnedItem.get(key1).toString().equals(userEmail))
+                    context.getLogger().log("Value: " + returnedItem.get(key1).s());
+                    if(returnedItem.get(key1).s().equals(userEmail))
                         return true;
                 }
             } else {
                 context.getLogger().log("No item found in the table!");
-               return true;
+                return false;
             }
         } catch (DynamoDbException e) {
             context.getLogger().log("DynamoDB Exception: " + e.getMessage());
