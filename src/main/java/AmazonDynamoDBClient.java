@@ -93,6 +93,6 @@ public class AmazonDynamoDBClient {
             context.getLogger().log("DynamoDB Exception: " + e.getMessage());
             return true;
         }
-        return true;
+        return false;
     }
 }
