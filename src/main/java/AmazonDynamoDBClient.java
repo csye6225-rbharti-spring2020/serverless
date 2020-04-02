@@ -1,6 +1,7 @@
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.dynamodb.model.*;
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient;
+import com.amazonaws.services.lambda.runtime.Context;
 
 import java.util.*;
 import java.util.HashMap;
@@ -31,7 +32,7 @@ public class AmazonDynamoDBClient {
      * @param userEmail
      * @return
      */
-    public boolean addItem(String userEmail) {
+    public boolean addItem(String userEmail, Context context) {
         HashMap<String,AttributeValue> itemValues = new HashMap<String,AttributeValue>();
         itemValues.put(ATTRIBUTE_EMAIL_ID_NAME, AttributeValue.builder().s(userEmail).build());
 
@@ -45,12 +46,15 @@ public class AmazonDynamoDBClient {
                 .item(itemValues)
                 .build();
         try {
-            this.amazonDynamoDB.putItem(request);
+            PutItemResponse putItemResponse = this.amazonDynamoDB.putItem(request);
+            context.getLogger().log("Put Response Metadata: " + putItemResponse.responseMetadata().toString());
             return true;
 
         } catch (ResourceNotFoundException e) {
+            context.getLogger().log("Resource not found Exception: " + e.getLocalizedMessage());
             return false;
         } catch (DynamoDbException e) {
+            context.getLogger().log("DynamoDB Exception: " + e.getMessage());
             return false;
         }
     }

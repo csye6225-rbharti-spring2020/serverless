@@ -1,11 +1,8 @@
 import com.amazonaws.regions.Regions;
 import com.amazonaws.services.simpleemail.AmazonSimpleEmailService;
 import com.amazonaws.services.simpleemail.AmazonSimpleEmailServiceClientBuilder;
-import com.amazonaws.services.simpleemail.model.Body;
-import com.amazonaws.services.simpleemail.model.Content;
-import com.amazonaws.services.simpleemail.model.Destination;
-import com.amazonaws.services.simpleemail.model.Message;
-import com.amazonaws.services.simpleemail.model.SendEmailRequest;
+import com.amazonaws.services.simpleemail.model.*;
+import com.amazonaws.services.lambda.runtime.Context;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -45,8 +42,12 @@ public class AmazonSES {
      *
      * @return boolean
      */
-    public boolean sendEmail() {
+    public boolean sendEmail(Context context) {
         try {
+            context.getLogger().log("Email to: " + this.TO);
+            context.getLogger().log("Email From: " + this.FROM);
+            context.getLogger().log("Email Subject: " + this.SUBJECT);
+            context.getLogger().log("Email Body: " + this.BODY);
             SendEmailRequest request = new SendEmailRequest()
                     .withDestination(
                             new Destination().withToAddresses(TO))
@@ -57,7 +58,8 @@ public class AmazonSES {
                             .withSubject(new Content()
                                     .withCharset("UTF-8").withData(SUBJECT)))
                     .withSource(FROM);
-            this.client.sendEmail(request);
+            SendEmailResult sendEmailResult = this.client.sendEmail(request);
+            context.getLogger().log("Email Result: " + sendEmailResult.getMessageId());
             return true;
         } catch (Exception ex) {
             return false;
