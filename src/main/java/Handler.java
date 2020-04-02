@@ -35,7 +35,7 @@ public class Handler implements RequestHandler<SNSEvent, Object> {
 
             //Only send the email if the email ID entry doesn't exist in the DynamoDB table anymore
             amazonDynamoDBClient = new AmazonDynamoDBClient();
-            boolean checkIfEmailEntryExists = amazonDynamoDBClient.checkIfEmailExists(userEmail);
+            boolean checkIfEmailEntryExists = amazonDynamoDBClient.checkIfEmailExists(userEmail, context);
             if (!checkIfEmailEntryExists) {
                 amazonDynamoDBClient.addItem(userEmail, context);
                 context.getLogger().log("Added the userEmail to the DynamoDB Table with a TTL of 60 minutes");
