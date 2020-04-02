@@ -62,6 +62,7 @@ public class AmazonSES {
             context.getLogger().log("Email Result: " + sendEmailResult.getMessageId());
             return true;
         } catch (Exception ex) {
+            context.getLogger().log("SES Exception: " + ex.getMessage());
             return false;
         }
     }
