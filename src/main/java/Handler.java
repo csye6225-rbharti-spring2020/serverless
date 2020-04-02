@@ -13,7 +13,7 @@ import java.util.stream.Stream;
  */
 public class Handler implements RequestHandler<SNSEvent, Object> {
 
-    private final String FROM_EMAIL = "no-reply@amazon.ses";
+    private final String FROM_EMAIL = "no-reply@cloud.prod.rohanbharti.me";
     private final String SUBJECT_EMAIL = "Bills Due Update";
 
     private AmazonSES amazonSESClient;
