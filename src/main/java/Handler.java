@@ -40,7 +40,7 @@ public class Handler implements RequestHandler<SNSEvent, Object> {
                 amazonDynamoDBClient.addItem(userEmail, context);
                 context.getLogger().log("Added the userEmail to the DynamoDB Table with a TTL of 60 minutes");
             } else {
-                context.getLogger().log("User has already been sent an email in the past 60 minutes or the client wasn't configured properly");
+                context.getLogger().log("User has already been sent an email in the past 60 minutes!");
                 return null;
             }
 
