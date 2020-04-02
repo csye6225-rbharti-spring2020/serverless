@@ -51,10 +51,10 @@ public class AmazonDynamoDBClient {
             return true;
 
         } catch (ResourceNotFoundException e) {
-            context.getLogger().log("Resource not found Exception");
+            context.getLogger().log("Resource not found Exception: " + e.getLocalizedMessage());
             return false;
         } catch (DynamoDbException e) {
-            context.getLogger().log("DynamoDB Exception");
+            context.getLogger().log("DynamoDB Exception: " + e.getMessage());
             return false;
         }
     }
