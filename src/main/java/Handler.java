@@ -25,37 +25,41 @@ public class Handler implements RequestHandler<SNSEvent, Object> {
         String timeStamp = new SimpleDateFormat("yyyy-MM-dd_HH:mm:ss").format(Calendar.getInstance().getTime());
         context.getLogger().log("Handler Invocation started: " + timeStamp);
 
-        String billsDueUrlsEmailListString = snsEvent.getRecords().get(0).getSNS().getMessage();
-        List<String> billsDueUrlsEmailList = Stream.of(billsDueUrlsEmailListString.split(",", -1)).collect(Collectors.toList());
+        SNSEvent.SNS sns = snsEvent.getRecords().get(0).getSNS();
 
-        String userEmail = billsDueUrlsEmailList.get(0);
+        if(sns.getMessage()!=null && (!sns.getMessage().isEmpty())) {
+            String billsDueUrlsEmailListString = sns.getMessage();
+            List<String> billsDueUrlsEmailList = Stream.of(billsDueUrlsEmailListString.split(",", -1)).collect(Collectors.toList());
 
-        //Only send the email if the email ID entry doesn't exist in the DynamoDB table anymore
-        amazonDynamoDBClient = new AmazonDynamoDBClient();
-        boolean checkIfEmailEntryExists = amazonDynamoDBClient.checkIfEmailExists(userEmail);
-        if(!checkIfEmailEntryExists) {
-            amazonDynamoDBClient.addItem(userEmail);
-            context.getLogger().log("Added the userEmail to the DynamoDB Table with a TTL of 60 minutes");
-        } else {
-            context.getLogger().log("User has already been sent an email in the past 60 minutes or the client wasn't configured properly");
-            return null;
+            String userEmail = billsDueUrlsEmailList.get(0);
+
+            //Only send the email if the email ID entry doesn't exist in the DynamoDB table anymore
+            amazonDynamoDBClient = new AmazonDynamoDBClient();
+            boolean checkIfEmailEntryExists = amazonDynamoDBClient.checkIfEmailExists(userEmail);
+            if (!checkIfEmailEntryExists) {
+                amazonDynamoDBClient.addItem(userEmail);
+                context.getLogger().log("Added the userEmail to the DynamoDB Table with a TTL of 60 minutes");
+            } else {
+                context.getLogger().log("User has already been sent an email in the past 60 minutes or the client wasn't configured properly");
+                return null;
+            }
+
+            //removing the email from the list
+            billsDueUrlsEmailList.remove(0);
+            String billsDueListString = String.join(", ", billsDueUrlsEmailList);
+
+            amazonSESClient = new AmazonSES(FROM_EMAIL, userEmail, SUBJECT_EMAIL, billsDueListString);
+            boolean emailSent = amazonSESClient.sendEmail();
+
+            if (emailSent) {
+                context.getLogger().log("Email sent to " + userEmail + " successfully containing all the due Bills Urls");
+            } else {
+                context.getLogger().log("Email wasn't sent to the user successfully");
+            }
+
+            timeStamp = new SimpleDateFormat("yyyy-MM-dd_HH:mm:ss").format(Calendar.getInstance().getTime());
+            context.getLogger().log("Handler Invocation completed: " + timeStamp);
         }
-
-        //removing the email from the list
-        billsDueUrlsEmailList.remove(0);
-        String billsDueListString = String.join(", ", billsDueUrlsEmailList);
-
-        amazonSESClient = new AmazonSES(FROM_EMAIL, userEmail, SUBJECT_EMAIL, billsDueListString);
-        boolean emailSent = amazonSESClient.sendEmail();
-
-        if(emailSent) {
-            context.getLogger().log("Email sent to " + userEmail + " successfully containing all the due Bills Urls");
-        } else {
-            context.getLogger().log("Email wasn't sent to the user successfully");
-        }
-
-        timeStamp = new SimpleDateFormat("yyyy-MM-dd_HH:mm:ss").format(Calendar.getInstance().getTime());
-        context.getLogger().log("Handler Invocation completed: " + timeStamp);
         return null;
     }
 }
