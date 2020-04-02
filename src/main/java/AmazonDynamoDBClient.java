@@ -81,6 +81,10 @@ public class AmazonDynamoDBClient {
                 Set<String> keys = returnedItem.keySet();
                 for (String key1 : keys) {
                     context.getLogger().log("Key: " + key1);
+                    if(key1.equals(ATTRIBUTE_TTL_NAME)) {
+                        context.getLogger().log("Value: " + returnedItem.get(key1).n());
+                        continue;
+                    }
                     context.getLogger().log("Value: " + returnedItem.get(key1).s());
                     if(returnedItem.get(key1).s().equals(userEmail))
                         return true;
