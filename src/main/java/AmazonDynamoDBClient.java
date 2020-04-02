@@ -65,7 +65,7 @@ public class AmazonDynamoDBClient {
      * @param userEmail
      * @return
      */
-    public boolean checkIfEmailExists(String userEmail) {
+    public boolean checkIfEmailExists(String userEmail, Context context) {
         HashMap<String,AttributeValue> keyToGet = new HashMap<String,AttributeValue>();
         keyToGet.put(ATTRIBUTE_EMAIL_ID_NAME, AttributeValue.builder().s(userEmail).build());
 
@@ -76,17 +76,21 @@ public class AmazonDynamoDBClient {
 
         try {
             Map<String,AttributeValue> returnedItem = amazonDynamoDB.getItem(request).item();
-
+            context.getLogger().log("Checking Key Value pairs in DynamoDB");
             if (returnedItem != null) {
                 Set<String> keys = returnedItem.keySet();
                 for (String key1 : keys) {
+                    context.getLogger().log("Key: " + key1);
+                    context.getLogger().log("Value: " + returnedItem.get(key1).toString());
                     if(returnedItem.get(key1).toString().equals(userEmail))
                         return true;
                 }
             } else {
-               return false;
+                context.getLogger().log("No item found in the table!");
+               return true;
             }
         } catch (DynamoDbException e) {
+            context.getLogger().log("DynamoDB Exception: " + e.getMessage());
             return true;
         }
         return true;
